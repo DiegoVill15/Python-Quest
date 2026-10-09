@@ -128,19 +128,25 @@ class NoRedirect(request.HTTPRedirectHandler):
 
 class PublicHTTPSConnection(http.client.HTTPSConnection):
     def connect(self):
+        timeout = self.timeout if isinstance(self.timeout, (int, float)) else REQUEST_TIMEOUT
+        deadline = getattr(self, 'deadline', time.monotonic() + timeout)
+        if time.monotonic() >= deadline:
+            raise TimeoutError('Tiempo de conexión agotado.')
         addresses = socket.getaddrinfo(self.host, self.port, type=socket.SOCK_STREAM)
         if not addresses or any(not ipaddress.ip_address(item[4][0]).is_global for item in addresses):
             raise ProviderError("El servidor debe usar direcciones públicas.")
 
         def pinned_connection(address, timeout, source_address=None):
             # Use the validated sockaddr directly; never resolve the hostname a second time.
-            deadline = time.monotonic() + timeout
             for family, kind, protocol, _, sockaddr in addresses:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('Tiempo de conexión agotado.')
                 transport = socket.socket(family, kind, protocol)
                 transport.settimeout(max(0.001, deadline - time.monotonic()))
                 self.transport = transport
                 try:
                     transport.connect(sockaddr)
+                    transport.settimeout(max(0.001, deadline - time.monotonic()))
                     return transport
                 except OSError as exc:
                     transport.close()
@@ -158,10 +164,12 @@ class PublicHTTPSHandler(request.HTTPSHandler):
     def __init__(self, connections):
         super().__init__(context=ssl.create_default_context())
         self.connections = connections
+        self.deadline = time.monotonic() + REQUEST_TIMEOUT
 
     def https_open(self, req):
         def connection(host, **kwargs):
             value = PublicHTTPSConnection(host, **kwargs)
+            value.deadline = self.deadline
             self.connections.append(value)
             return value
         return self.do_open(connection, req, context=self._context)
@@ -193,10 +201,11 @@ def http_json(url, token, provider, payload=None):
                 transport.close()
 
     timer = threading.Timer(REQUEST_TIMEOUT, stop_connection)
-    timer.start()
     try:
         # Proxies can resolve names independently, so do not use environment proxy settings.
-        with request.build_opener(request.ProxyHandler({}), PublicHTTPSHandler(connections), NoRedirect).open(call, timeout=REQUEST_TIMEOUT) as response:
+        opener = request.build_opener(request.ProxyHandler({}), PublicHTTPSHandler(connections), NoRedirect)
+        timer.start()
+        with opener.open(call, timeout=REQUEST_TIMEOUT) as response:
             body = response.read(RESPONSE_LIMIT + 1)
             if expired.is_set():
                 raise ProviderError("La IA tardó demasiado. Inténtalo de nuevo.")

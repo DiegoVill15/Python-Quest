@@ -81,6 +81,12 @@ class SecurityTests(unittest.TestCase):
                 providers.PublicHTTPSConnection('audit.example').connect()
             start.assert_not_called()
 
+        connection = providers.PublicHTTPSConnection('audit.example')
+        connection.deadline = time.monotonic() - 1
+        with patch('quest.providers.socket.getaddrinfo') as dns, self.assertRaises(TimeoutError):
+            connection.connect()
+        dns.assert_not_called()
+
     def test_http_response_limit_and_total_deadline(self):
         with patch('quest.providers.validate_endpoint'), patch('quest.providers.request.build_opener') as opener:
             opener.return_value.open.return_value = io.BytesIO(b'{}')
