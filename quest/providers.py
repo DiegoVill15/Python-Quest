@@ -1,6 +1,7 @@
 """Local AI connections. API tokens live only in the operating system keychain."""
 
 import ipaddress
+import http.client
 import json
 import os
 import shutil
@@ -8,6 +9,8 @@ import socket
 import subprocess
 import tempfile
 import threading
+import time
+import ssl
 from pathlib import Path
 from urllib import error, parse, request
 
@@ -21,6 +24,8 @@ API = {"openai": ("OpenAI API", "https://api.openai.com/v1"),
        "anthropic": ("Anthropic API", "https://api.anthropic.com/v1"),
        "ollama": ("Ollama Cloud", "https://ollama.com/v1"),
        "openrouter": ("OpenRouter", "https://openrouter.ai/api/v1")}
+RESPONSE_LIMIT = 2 * 1024 * 1024
+REQUEST_TIMEOUT = 120
 
 
 class ProviderError(RuntimeError):
@@ -121,20 +126,121 @@ class NoRedirect(request.HTTPRedirectHandler):
         raise ProviderError("El servidor intentó redirigir la petición.")
 
 
+class PublicHTTPSConnection(http.client.HTTPSConnection):
+    def connect(self):
+        addresses = socket.getaddrinfo(self.host, self.port, type=socket.SOCK_STREAM)
+        if not addresses or any(not ipaddress.ip_address(item[4][0]).is_global for item in addresses):
+            raise ProviderError("El servidor debe usar direcciones públicas.")
+
+        def pinned_connection(address, timeout, source_address=None):
+            # Use the validated sockaddr directly; never resolve the hostname a second time.
+            deadline = time.monotonic() + timeout
+            for family, kind, protocol, _, sockaddr in addresses:
+                transport = socket.socket(family, kind, protocol)
+                transport.settimeout(max(0.001, deadline - time.monotonic()))
+                self.transport = transport
+                try:
+                    transport.connect(sockaddr)
+                    return transport
+                except OSError as exc:
+                    transport.close()
+                    failure = exc
+                    if time.monotonic() >= deadline:
+                        break
+            raise failure
+
+        self._create_connection = pinned_connection
+        super().connect()
+        self.transport = self.sock
+
+
+class PublicHTTPSHandler(request.HTTPSHandler):
+    def __init__(self, connections):
+        super().__init__(context=ssl.create_default_context())
+        self.connections = connections
+
+    def https_open(self, req):
+        def connection(host, **kwargs):
+            value = PublicHTTPSConnection(host, **kwargs)
+            self.connections.append(value)
+            return value
+        return self.do_open(connection, req, context=self._context)
+
+
 def http_json(url, token, provider, payload=None):
+    try:
+        validate_endpoint(url)
+    except ValueError as exc:
+        raise ProviderError(str(exc)) from exc
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     if provider == "anthropic":
         headers.update({"x-api-key": token, "anthropic-version": "2023-06-01"})
     else:
         headers["Authorization"] = f"Bearer {token}"
     call = request.Request(url, data=json.dumps(payload).encode() if payload is not None else None, headers=headers)
+    connections = []
+    expired = threading.Event()
+
+    def stop_connection():
+        expired.set()
+        for connection in connections:
+            transport = getattr(connection, "transport", None)
+            if transport is not None:
+                try:
+                    transport.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+                transport.close()
+
+    timer = threading.Timer(REQUEST_TIMEOUT, stop_connection)
+    timer.start()
     try:
-        with request.build_opener(NoRedirect).open(call, timeout=120) as response:
-            return json.load(response)
+        # Proxies can resolve names independently, so do not use environment proxy settings.
+        with request.build_opener(request.ProxyHandler({}), PublicHTTPSHandler(connections), NoRedirect).open(call, timeout=REQUEST_TIMEOUT) as response:
+            body = response.read(RESPONSE_LIMIT + 1)
+            if expired.is_set():
+                raise ProviderError("La IA tardó demasiado. Inténtalo de nuevo.")
+            if len(body) > RESPONSE_LIMIT:
+                raise ProviderError("La respuesta del proveedor supera el tamaño permitido.")
+            return json.loads(body)
     except error.HTTPError as exc:
         raise ProviderError(f"El proveedor rechazó la petición (HTTP {exc.code}). Revisa la clave y el modelo.") from exc
-    except (error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, ValueError, RecursionError, http.client.HTTPException) as exc:
         raise ProviderError("No se pudo conectar o leer la respuesta del proveedor.") from exc
+    finally:
+        timer.cancel()
+
+
+def run_cli(command, *, input=None, timeout=REQUEST_TIMEOUT, **kwargs):
+    """Bound provider output on disk before loading it into memory."""
+    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        with subprocess.Popen(command, stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
+                              stdout=stdout, stderr=stderr, **kwargs) as process:
+            finished = threading.Event()
+            oversized = threading.Event()
+
+            def limit_output():
+                while not finished.wait(0.02):
+                    if os.fstat(stdout.fileno()).st_size + os.fstat(stderr.fileno()).st_size > RESPONSE_LIMIT:
+                        oversized.set()
+                        process.kill()
+                        return
+
+            watcher = threading.Thread(target=limit_output, daemon=True)
+            watcher.start()
+            try:
+                process.communicate(input=input, timeout=timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+                raise
+            finally:
+                finished.set()
+                watcher.join()
+            if oversized.is_set() or os.fstat(stdout.fileno()).st_size + os.fstat(stderr.fileno()).st_size > RESPONSE_LIMIT:
+                raise ProviderError("La respuesta del proveedor supera el tamaño permitido.")
+            stdout.seek(0)
+            return subprocess.CompletedProcess(command, process.returncode, stdout.read(RESPONSE_LIMIT).decode('utf-8'))
 
 
 def cli_models(name):
@@ -157,7 +263,14 @@ def cli_models(name):
                     process.stdin.flush()
 
                 def receive(request_id):
-                    for line in process.stdout:
+                    total = 0
+                    while True:
+                        line = process.stdout.readline(RESPONSE_LIMIT + 1)
+                        if not line:
+                            break
+                        total += len(line.encode('utf-8'))
+                        if total > RESPONSE_LIMIT:
+                            raise ProviderError("La respuesta del proveedor supera el tamaño permitido.")
                         message = json.loads(line)
                         if name == "codex" and message.get("id") == request_id:
                             if "error" in message:
@@ -211,7 +324,7 @@ def models(ai, connection_id):
         if connection_id in ("codex", "claude"):
             return cli_models(connection_id)
         try:
-            result = subprocess.run([cli_path("opencode") or "opencode", "models"], capture_output=True, text=True, timeout=20)
+            result = run_cli([cli_path("opencode") or "opencode", "models"], text=True, timeout=20)
             return result.stdout.splitlines()[:200] if result.returncode == 0 else []
         except (OSError, subprocess.TimeoutExpired):
             return []
@@ -250,7 +363,7 @@ def ask(prompt, schema_name, ai):
             env["OPENCODE_CONFIG_CONTENT"] = json.dumps({"permission": "deny", "share": "disabled"})
         try:
             with tempfile.TemporaryDirectory() as directory:
-                result = subprocess.run(command, input=prompt, text=True, capture_output=True,
+                result = run_cli(command, input=prompt, text=True,
                                         cwd=directory, timeout=120, env=env)
         except subprocess.TimeoutExpired as exc:
             raise ProviderError("La IA tardó demasiado. Inténtalo de nuevo.") from exc

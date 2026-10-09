@@ -9,8 +9,8 @@ from .curriculum import CURRICULUM, STAGES_PER_WORLD, WORLD_BY_ID, WORLDS, sourc
 
 def fits_world(source, world_id, stage=None):
     try:
-        nodes = list(ast.walk(ast.parse(source)))
-    except SyntaxError:
+        nodes = list(ast.walk(grader.validate_source(source)))
+    except (SyntaxError, ValueError, RecursionError):
         return False
     # La solución de referencia viene de la IA y se ejecuta para validar sus pruebas.
     if any(isinstance(node, (ast.Import, ast.ImportFrom, ast.Global, ast.Nonlocal)) for node in nodes):
@@ -84,11 +84,19 @@ def make_challenge(store, world_id):
         preferences = {"summary": state["preferences"]["summary"],
                        "pending": list(state["preferences"]["pending"])}
         try:
-            generated = dict(codex_teacher.generate(world_id, stage, previous_missions, errors,
-                                                    preferences, state["ai"], rejection_feedback))
+            generated = codex_teacher.generate(world_id, stage, previous_missions, errors,
+                                                preferences, state["ai"], rejection_feedback)
         finally:
             store.save(state)
-        tests = generated.get("tests", [])
+        if (not isinstance(generated, dict)
+                or any(not isinstance(generated.get(key), str) for key in
+                       ("title", "story", "objective", "input_format", "output_format", "hint", "preference_summary", "reference_solution"))
+                or not isinstance(generated.get("tests"), list)
+                or not all(isinstance(test, dict) for test in generated["tests"])):
+            rejection_feedback = "Devuelve todos los campos con los tipos indicados en el esquema JSON."
+            continue
+        generated = dict(generated)
+        tests = generated["tests"]
         generated_format = " ".join(f"{generated.get('input_format', '')} {generated.get('output_format', '')}".casefold().split())
         if (
             len(tests) != mastery["public_tests"] + mastery["hidden_tests"] or not all(isinstance(test.get("input"), str) and isinstance(test.get("expected"), str) for test in tests)
@@ -117,7 +125,7 @@ def make_challenge(store, world_id):
                 if unavailable or missing:
                     rejection_feedback = (f"La solución usa construcciones aún no permitidas: {sorted(unavailable)}; "
                                           f"faltan las obligatorias: {sorted(missing)}. Respeta el plan de la etapa.")
-            except SyntaxError:
+            except (SyntaxError, ValueError, RecursionError):
                 rejection_feedback = "La solución de referencia tiene un error de sintaxis. Corrígelo antes de generar las pruebas."
             continue
         if not all(result["passed"] for result in grader.grade(generated["reference_solution"], tests)):

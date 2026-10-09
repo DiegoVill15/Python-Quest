@@ -179,7 +179,7 @@ for line in sys.stdin:
     def test_provider_dispatch_and_endpoint_validation(self):
         ai = {"connections": [], "selection": {"id": "claude", "model": "sonnet"}}
         response = json.dumps({"structured_output": {"note": "Bien", "improvement": "Sigue", "weakness": "ninguna"}})
-        with patch("quest.providers.shutil.which", return_value="/usr/bin/claude"), patch("quest.providers.subprocess.run") as run:
+        with patch("quest.providers.shutil.which", return_value="/usr/bin/claude"), patch("quest.providers.run_cli") as run:
             run.return_value.returncode = 0
             run.return_value.stdout = response
             self.assertEqual(providers.ask("Evalúa", "review.json", ai)["note"], "Bien")
@@ -195,7 +195,7 @@ for line in sys.stdin:
             {"type": "turn.completed", "usage": {"input_tokens": 100, "cached_input_tokens": 40,
                                                  "output_tokens": 12, "reasoning_output_tokens": 0}},
         ]
-        with patch("quest.providers.shutil.which", return_value="/usr/bin/codex"), patch("quest.providers.subprocess.run") as run:
+        with patch("quest.providers.shutil.which", return_value="/usr/bin/codex"), patch("quest.providers.run_cli") as run:
             run.return_value.returncode = 0
             run.return_value.stdout = "\n".join(json.dumps(event) for event in events)
             self.assertEqual(providers.ask("Revisa", "review.json", ai), REVIEW)

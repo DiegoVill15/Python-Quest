@@ -41,7 +41,7 @@ Las comprobaciones detectan inconsistencias, pero no garantizan que todo enuncia
 - Una conexión de IA: Codex CLI, Claude CLI, OpenCode CLI, OpenAI API, Anthropic API, Ollama Cloud, OpenRouter o una API HTTPS compatible con OpenAI.
 - Un llavero del sistema disponible si utilizas una clave API (en Linux suele requerir Secret Service).
 
-**Uso local y personal:** el programa ejecuta código con los permisos de tu usuario. No lo expongas como servicio público ni multiusuario; consulta [los límites de seguridad](#seguridad-y-datos).
+**Uso local y personal:** el ejecutor permite las herramientas de Python del curso, pero no sustituye un entorno aislado del sistema operativo. No lo expongas como servicio público ni multiusuario; consulta [los límites de seguridad](#seguridad-y-datos).
 
 ## Iniciar
 
@@ -130,7 +130,11 @@ Los recursos de `static/assets/kenney/` son de [Kenney UI Pack Pixel Adventure](
 
 ## Seguridad y datos
 
-Esta versión ejecuta código escrito por el usuario y una solución de referencia creada por la IA. Los límites de tiempo y salida no aíslan el código del sistema: un programa puede acceder a archivos y recursos con los permisos de tu usuario. Permite acceso solo a tus dispositivos de confianza; no la publiques en Internet ni como servicio multiusuario. La opción de API compatible acepta únicamente servidores HTTPS públicos.
+Esta versión ejecuta código escrito por el usuario y una solución de referencia creada por la IA. Ambos pasan por la misma validación y se ejecutan con un conjunto reducido de funciones incorporadas. Se permiten las herramientas del curso: entrada y salida, cálculos, decisiones, bucles, colecciones y funciones propias. Las importaciones, el acceso a archivos, la creación de procesos y la inspección interna de objetos están bloqueados.
+
+Cada ejecución tiene límites de tiempo y salida; en Linux también se limita la memoria del proceso. Estas restricciones no equivalen a aislar el intérprete mediante el sistema operativo. Permite acceso solo a tus dispositivos de confianza; no la publiques en Internet ni como servicio multiusuario.
+
+Las conexiones API utilizan HTTPS con verificación de certificados, direcciones públicas comprobadas al conectar y sin redirecciones. No utilizan proxies configurados mediante variables de entorno. Las respuestas HTTP y de las CLI tienen un máximo de 2 MiB y un tiempo de espera; la aplicación rechaza misiones cuyos campos no respetan el formato esperado.
 
 El contexto del ejercicio y el código enviado para revisión se comparten con el proveedor de IA seleccionado. No incluyas contraseñas ni datos sensibles en el editor o en tus comentarios.
 
@@ -179,7 +183,7 @@ En el equipo servidor, ejecuta:
 tailscale serve --bg --tcp=5000 off
 ```
 
-Este acceso es opcional. Python Quest no tiene inicio de sesión propio: quien tenga acceso puede ejecutar código con los permisos del servidor. Usa **Serve** para tu red privada; no actives Funnel para publicarla en Internet. Consulta la [documentación de Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve).
+Este acceso es opcional. Python Quest no tiene inicio de sesión propio: quien tenga acceso puede ejecutar programas admitidos por el curso, cambiar el progreso y utilizar la conexión de IA del servidor. Usa **Serve** para tu red privada; no actives Funnel para publicarla en Internet. Consulta la [documentación de Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve).
 
 ## Pruebas
 

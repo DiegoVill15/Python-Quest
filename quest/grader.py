@@ -6,6 +6,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from .execution import validate_source
+
 if os.name == "posix":
     import resource
 
@@ -16,12 +18,15 @@ OUTPUT_LIMIT = 32_768
 
 def _limit_output():
     resource.setrlimit(resource.RLIMIT_FSIZE, (OUTPUT_LIMIT, OUTPUT_LIMIT))
+    resource.setrlimit(resource.RLIMIT_CPU, (TIME_LIMIT + 1, TIME_LIMIT + 1))
+    if sys.platform != 'darwin':
+        resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
 
 
 def _stop_process(process):
-    if process.poll() is not None:
-        return
     if os.name == "nt":
+        if process.poll() is not None:
+            return
         try:
             subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2, check=False)
@@ -37,6 +42,10 @@ def _stop_process(process):
 
 
 def run_one(source, stdin):
+    try:
+        validate_source(source)
+    except (SyntaxError, ValueError, RecursionError) as error:
+        return {"actual": "", "stdout": "", "error": str(error), "timed_out": False}
     with tempfile.TemporaryDirectory(prefix="python-quest-") as directory:
         path = Path(directory)
         (path / "solution.py").write_text(source, encoding="utf-8")
@@ -45,9 +54,10 @@ def run_one(source, stdin):
                            if key in {"PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL"}}
             environment["PYTHONIOENCODING"] = "utf-8"
             environment["PYTHONNOUSERSITE"] = "1"
+            process = None
             try:
                 process = subprocess.Popen(
-                    [sys.executable, "-I", "solution.py"], stdin=subprocess.PIPE,
+                    [sys.executable, "-I", str(Path(__file__).with_name('execution.py')), str(path / 'solution.py')], stdin=subprocess.PIPE,
                     stdout=stdout, stderr=stderr, cwd=path, env=environment,
                     preexec_fn=_limit_output if os.name == "posix" else None,
                     start_new_session=os.name == "posix",
@@ -73,6 +83,10 @@ def run_one(source, stdin):
                 process.wait()
             except OSError as error:
                 return {"actual": "", "stdout": "", "error": str(error), "timed_out": False}
+            finally:
+                if process is not None:
+                    _stop_process(process)
+                    process.wait()
             stdout.seek(0)
             stderr.seek(0)
             output = stdout.read(OUTPUT_LIMIT).decode("utf-8", errors="replace")
