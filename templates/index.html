@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Python Quest · Crónicas del código</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Python Quest, inicio"><span class="brand-mark">Py</span><span>PYTHON <strong>QUEST</strong></span></a>
+      <div class="top-actions"><button id="ai-open" class="settings-button" type="button" aria-haspopup="dialog" aria-controls="ai-dialog">⚙ Conexión de IA</button><span class="local-pill">● AVENTURA LOCAL</span><button id="avatar-open" class="avatar" type="button" aria-haspopup="dialog" aria-controls="wardrobe-dialog" aria-label="Abrir guardarropa"><span id="top-avatar" aria-hidden="true">✦</span></button></div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <span id="campaign-heading" class="eyebrow">✦ CRÓNICAS DEL CÓDIGO · TU CAMPAÑA</span>
+          <h1 id="hero-title">Tu aventura<br><em>comienza con una línea.</em></h1>
+          <p id="campaign-description">Aprende Python misión a misión, domina cada desafío y escribe tu propia leyenda.</p>
+          <a class="primary-button hero-button" href="#worlds-title">Abrir el mapa <span>➜</span></a>
+          <button id="wardrobe-open" class="hero-wardrobe-link" type="button" aria-haspopup="dialog" aria-controls="wardrobe-dialog">✦ Conoce a tu aventurero y su guardarropa</button>
+          <div class="hero-stats" aria-label="Tu progreso">
+            <div class="stat"><span class="stat-icon">◆</span><div><strong id="level">1</strong><small>NIVEL</small></div></div>
+            <div class="stat"><span class="stat-icon coin-icon"></span><div><strong id="xp">0</strong><small>XP TOTAL</small></div></div>
+            <div class="stat"><span class="stat-icon">✓</span><div><strong id="completed">0</strong><small>MISIONES</small></div></div>
+            <div class="stat"><span class="stat-icon">✧</span><div><strong id="ai-tokens">0</strong><small>TOKENS IA MEDIDOS</small></div></div>
+          </div>
+        </div>
+        <div class="hero-art">
+          <div class="map-glow"></div><div class="hero-rune rune-one">✦</div><div class="hero-rune rune-two">✧</div>
+          <div id="hero-character" class="kaykit-character hero-character" role="img" aria-label="Tu aventurero"></div>
+          <div class="hero-scroll"><span>MI AVENTURERO</span><br><strong id="hero-name">Aventurero</strong></div>
+        </div>
+      </section>
+
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+      <div id="victory" class="victory" hidden><span>✦</span><div><strong>¡Leyenda de Python!</strong><p>Terminaste la campaña. Puedes reiniciar cualquier aldea para practicar de nuevo.</p></div></div>
+
+      <section class="section worlds-section" aria-labelledby="worlds-title">
+        <div class="section-heading"><div><span class="section-kicker">✧ MAPA DE LA AVENTURA</span><h2 id="worlds-title">El camino del héroe</h2><p>Supera cinco misiones para abrir el siguiente mundo.</p></div><span id="world-count" class="section-decoration">MUNDOS</span></div>
+        <div id="world-map" class="world-map"><div id="map-svg"></div><div id="map-hero" class="kaykit-character map-hero" role="img" aria-label="Tu aventurero en el mapa"></div></div>
+      </section>
+
+      <section class="section preferences-panel" aria-labelledby="preferences-title">
+        <h2 id="preferences-title">Preferencias para próximas misiones</h2>
+        <p>Cuéntame qué te ayuda a aprender. Al crear la siguiente misión, la IA resumirá tus comentarios para recordarlos sin repetirlos.</p>
+        <label for="preference-note">Tu comentario</label>
+        <textarea id="preference-note" rows="3" maxlength="500" placeholder="Por ejemplo: prefiero historias cortas y ejemplos con números pequeños"></textarea>
+        <div class="preferences-actions"><button id="preference-save" class="run-button" type="button">Guardar comentario</button><button id="preference-clear" class="text-button" type="button">Borrar preferencias</button></div>
+        <p id="preferences-pending" class="preferences-pending"></p>
+        <div class="preferences-memory"><strong>Lo que recordaré</strong><p id="preferences-summary">Todavía no hay preferencias resumidas.</p></div>
+      </section>
+
+      <section id="quest-panel" class="section quest-panel" aria-labelledby="quest-title" hidden>
+        <div class="section-heading quest-heading"><div><span id="quest-world" class="section-kicker"></span><span id="quest-stage" class="stage-chip"></span><h2 id="quest-title"></h2><p id="quest-story"></p></div><span id="quest-badge" class="quest-badge">MISIÓN ACTIVA</span></div>
+        <div class="quest-layout">
+          <div class="mission-card">
+            <details id="lesson" class="lesson" hidden>
+              <summary id="lesson-title"></summary>
+              <p id="lesson-explanation"></p>
+              <div class="lesson-result"><strong>Entrada de ejemplo:</strong><pre id="lesson-input"></pre></div>
+              <pre><code id="lesson-code"></code></pre>
+              <div class="lesson-result"><strong>Al ejecutarlo:</strong><pre id="lesson-output"></pre></div>
+            </details>
+            <div class="card-label">◆ TU MISIÓN</div>
+            <div id="quest-task" class="task-content"></div>
+            <div class="examples-label">◈ EJEMPLOS</div>
+            <div id="examples" class="examples"></div>
+            <div id="learning-note" class="learning-note" hidden><strong>Lo que corregiste</strong><p id="learning-note-text"></p></div>
+            <button id="hint-button" class="text-button" type="button">✧ Necesito una pista</button>
+            <p id="hint" class="hint" hidden></p>
+          </div>
+          <div class="editor-card">
+            <div class="editor-top"><span class="editor-file">⌁ solucion.py</span><span class="editor-language">PYTHON</span></div>
+            <div id="code-editor"></div>
+            <label class="run-label" for="run-input">Entrada para probar tu programa</label>
+            <textarea id="run-input" class="run-input" rows="4" maxlength="2000" placeholder="Escribe aquí las líneas que leerá input()"></textarea>
+            <div class="editor-bottom"><span>Tab indenta · Esc y Tab sale del editor</span><div class="editor-actions"><button id="run-button" class="run-button" type="button">Ejecutar</button><button id="submit-button" class="primary-button" type="button">Enviar solución ➜</button></div></div>
+            <div id="run-result" class="run-result" role="status" aria-live="polite" hidden></div>
+            <p id="archive-note" class="archive-note" hidden>Esta misión está archivada: puedes consultar la lección, el enunciado y los ejemplos. Para escribir y enviar una solución, continúa la misión activa desde el mapa.</p>
+          </div>
+        </div>
+        <div id="feedback" class="feedback" hidden aria-live="polite"></div>
+      </section>
+
+      <section class="section lower-grid" aria-label="Progreso y trofeos">
+        <div class="panel"><div class="panel-heading"><div><span class="section-kicker">◆ DIARIO</span><h2>Misiones recientes</h2></div><span class="panel-icon">✎</span></div><p class="empty">Abre uno de tus últimos cinco retos para consultar su lección y ejemplos, o continuar si sigue activo.</p><div id="recent" class="recent-list"><p class="empty">Tu historia comienza con la primera misión.</p></div></div>
+        <div class="panel"><div class="panel-heading"><div><span class="section-kicker">✦ RECOMPENSAS</span><h2>Sala de trofeos</h2></div><span class="panel-icon">♛</span></div><div id="trophies" class="trophies"><p class="empty">Los trofeos aparecerán aquí.</p></div></div>
+      </section>
+
+    </main>
+    <dialog id="wardrobe-dialog" class="settings-dialog wardrobe-dialog" aria-labelledby="wardrobe-title">
+      <section class="wardrobe-section" aria-labelledby="wardrobe-title">
+        <form method="dialog" class="settings-close-form"><button class="settings-close" type="submit" aria-label="Cerrar guardarropa">×</button></form>
+        <div id="wardrobe-notice" class="notice" role="status" aria-live="polite" hidden></div>
+        <div class="section-heading"><div><span class="section-kicker">✦ TU HISTORIA</span><h2 id="wardrobe-title">El guardarropa del aventurero</h2><p>Prueba cada objeto en 3D antes de comprarlo. Los objetos especiales esperan tus logros.</p></div><span class="section-decoration">5 ASPECTOS · 8 OBJETOS</span></div>
+        <div class="wardrobe-layout">
+          <div class="wardrobe-profile panel">
+            <div id="wardrobe-character" class="kaykit-character wardrobe-character" role="img" aria-label="Tu aventurero equipado"></div>
+            <p id="preview-label" class="preview-label" aria-live="polite">Tu equipo actual · arrastra para girar</p>
+            <div class="rotation-controls"><button id="rotate-left" type="button" aria-label="Girar personaje a la izquierda">↶ Girar</button><button id="rotate-right" type="button" aria-label="Girar personaje a la derecha">Girar ↷</button></div>
+            <button id="preview-reset" class="preview-reset" type="button" hidden>Volver a mi equipo</button>
+            <label for="hero-appearance">Aspecto del aventurero</label>
+            <select id="hero-appearance" class="appearance-select"></select>
+            <label for="hero-name-input">Nombre del aventurero</label>
+            <form id="hero-name-form" class="hero-name-form"><input id="hero-name-input" maxlength="24" autocomplete="off" required><button class="run-button" type="submit">Guardar</button></form>
+            <p class="hero-balance"><span class="coin-icon" aria-hidden="true"></span><strong id="hero-coins">0</strong> monedas disponibles</p>
+            <p class="hero-tip">Cada misión nueva superada da 10 monedas. El XP sigue aumentando tu nivel.</p>
+          </div>
+          <div id="shop-items" class="shop-items" aria-live="polite"></div>
+        </div>
+      </section>
+    </dialog>
+    <dialog id="ai-dialog" class="settings-dialog" aria-labelledby="ai-title">
+      <section class="preferences-panel" aria-labelledby="ai-title">
+        <form method="dialog" class="settings-close-form"><button class="settings-close" type="submit" aria-label="Cerrar conexión de IA">×</button></form>
+        <div id="ai-notice" class="notice" role="status" aria-live="polite" hidden></div>
+        <h2 id="ai-title">Conexión de IA</h2>
+        <p>Elige una CLI con sesión iniciada o añade una clave API. El modelo seleccionado se usará para crear y revisar misiones.</p>
+        <div class="ai-fields">
+          <label for="ai-connection">Proveedor conectado</label>
+          <select id="ai-connection"></select>
+          <label for="ai-model">Modelo</label>
+          <select id="ai-model" aria-describedby="ai-help" disabled><option>Cargando modelos…</option></select>
+          <label for="ai-model-manual" id="ai-model-manual-label" hidden>ID del modelo</label>
+          <input id="ai-model-manual" maxlength="100" autocomplete="off" placeholder="Escribe el ID del modelo" hidden>
+        </div>
+        <div class="preferences-actions"><button id="ai-save" class="run-button" type="button" disabled>Usar este modelo</button><button id="ai-remove" class="text-button" type="button">Quitar conexión API</button></div>
+        <p id="ai-help" class="preferences-pending" role="status" aria-live="polite"></p>
+        <div class="preferences-memory"><strong>Consumo de IA</strong><p id="ai-usage-detail">Todavía no hay llamadas medidas.</p></div>
+        <details class="ai-add"><summary>Añadir una conexión API</summary>
+          <div class="ai-fields">
+            <label for="ai-provider">Proveedor</label>
+            <select id="ai-provider"><option value="openai">OpenAI API</option><option value="anthropic">Anthropic API</option><option value="ollama">Ollama Cloud</option><option value="openrouter">OpenRouter · modelos gratis</option><option value="compatible">API compatible con OpenAI</option></select>
+            <label for="ai-label">Nombre de la conexión</label><input id="ai-label" maxlength="60" placeholder="Opcional">
+            <label for="ai-endpoint">URL HTTPS de la API compatible</label><input id="ai-endpoint" type="url" placeholder="https://ejemplo.com/v1" hidden>
+            <label for="ai-token">Clave API</label><input id="ai-token" type="password" autocomplete="off" placeholder="Se guardará en el llavero del sistema">
+          </div>
+          <p class="preferences-pending"><span id="ai-provider-help"></span> <a id="ai-key-link" target="_blank" rel="noopener noreferrer" hidden>Obtener clave API</a></p>
+          <button id="ai-add" class="run-button" type="button">Guardar conexión</button>
+        </details>
+      </section>
+    </dialog>
+    <footer>Hecho para aprender, misión a misión <span>✦</span> IA configurable · Interfaz: Kenney CC0 · Aventureros: <a href="https://kaylousberg.itch.io/kaykit-adventurers" target="_blank" rel="noopener noreferrer">KayKit CC0</a></footer>
+  </div>
+  <script src="/static/app.bundle.js" defer></script>
+</body>
+</html>

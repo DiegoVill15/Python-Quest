@@ -1,0 +1,8 @@
+KayKit - Character Pack: Adventurers 2.0 FREE
+Creator: Kay Lousberg
+Source: https://kaylousberg.itch.io/kaykit-adventurers
+License: Creative Commons Zero v1.0 Universal (CC0)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Files used here: Barbarian, Knight, Mage, Ranger, Rogue and Rogue_Hooded GLB
+models, Rig_Medium_General animations, and staff glTF with its texture.

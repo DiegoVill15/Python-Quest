@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "title": {"type": "string"},
+    "story": {"type": "string"},
+    "objective": {"type": "string"},
+    "input_format": {"type": "string"},
+    "output_format": {"type": "string"},
+    "rules": {"type": "array", "items": {"type": "string"}},
+    "hint": {"type": "string"},
+    "preference_summary": {"type": "string"},
+    "reference_solution": {"type": "string"},
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "input": {"type": "string"},
+          "expected": {"type": "string"}
+        },
+        "required": ["input", "expected"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["title", "story", "objective", "input_format", "output_format", "rules", "hint", "preference_summary", "reference_solution", "tests"],
+  "additionalProperties": false
+}

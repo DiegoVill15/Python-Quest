@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "note": {"type": "string"},
+    "improvement": {"type": "string"},
+    "weakness": {"type": "string"}
+  },
+  "required": ["note", "improvement", "weakness"],
+  "additionalProperties": false
+}

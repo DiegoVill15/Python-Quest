@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "novel": {"type": "boolean"},
+    "reason": {"type": "string"}
+  },
+  "required": ["novel", "reason"],
+  "additionalProperties": false
+}
