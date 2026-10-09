@@ -141,7 +141,45 @@ El contexto del ejercicio y el código enviado para revisión se comparten con e
 
 ### Acceso desde otros dispositivos
 
-De forma opcional, puedes acceder desde dispositivos de confianza mediante Tailscale Serve. La aplicación reconoce los nombres y direcciones del equipo en Tailscale cuando está activo y mantiene el servidor en `127.0.0.1`. Este acceso requiere configurar Tailscale por separado; no es necesario para el uso local.
+Puedes usar Python Quest desde otro ordenador, una tablet o un teléfono mediante **Tailscale Serve**. El equipo que ejecuta Python Quest debe permanecer encendido, con la aplicación abierta.
+
+#### 1. Conectar tus dispositivos
+
+Instala [Tailscale](https://tailscale.com/download) en el equipo servidor y en los dispositivos desde los que quieras entrar. Conéctalos a la misma red privada de Tailscale y permite acceso al servidor solo a dispositivos y personas de confianza.
+
+#### 2. Compartir la aplicación dentro de tu red privada
+
+Inicia Python Quest como se explica arriba. En otra terminal del equipo servidor, ejecuta:
+
+```sh
+tailscale serve --bg --tcp=5000 tcp://127.0.0.1:5001
+tailscale ip -4
+tailscale serve status
+```
+
+La aplicación sigue escuchando en `127.0.0.1:5001`; Tailscale permite acceder a ella por el puerto `5000` dentro de tu red privada. `--bg` mantiene esta configuración activa en segundo plano.
+
+#### 3. Abrir desde otro dispositivo
+
+Con Tailscale conectado, abre en su navegador:
+
+```text
+http://<IP-Tailscale-del-servidor>:5000
+```
+
+Sustituye el marcador por la dirección que mostró `tailscale ip -4`. Si tienes MagicDNS habilitado, también puedes utilizar el nombre del servidor en lugar de su IP.
+
+El progreso y la conexión de IA pertenecen al servidor. Los borradores del editor se guardan por separado en cada navegador.
+
+#### 4. Desactivar el acceso
+
+En el equipo servidor, ejecuta:
+
+```sh
+tailscale serve --bg --tcp=5000 off
+```
+
+Este acceso es opcional. Python Quest no tiene inicio de sesión propio: quien tenga acceso puede ejecutar código con los permisos del servidor. Usa **Serve** para tu red privada; no actives Funnel para publicarla en Internet. Consulta la [documentación de Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve).
 
 ## Pruebas
 
