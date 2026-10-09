@@ -49,6 +49,9 @@ def validate_source(source):
 if __name__ == '__main__':
     import sys
     from pathlib import Path
+    sys.stdin.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8', newline='\n')
+    sys.stderr.reconfigure(encoding='utf-8', newline='\n')
     source = Path(sys.argv[1]).read_text(encoding='utf-8')
     tree = validate_source(source)
     scope = {'__builtins__': BUILTINS}

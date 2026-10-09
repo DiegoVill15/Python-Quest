@@ -130,6 +130,23 @@ Los recursos de `static/assets/kenney/` son de [Kenney UI Pack Pixel Adventure](
 
 ## Seguridad y datos
 
+### Correcciones verificadas
+
+La revisión de seguridad llevó a estas mejoras, comprobadas mediante pruebas de regresión en [tests/test_security.py](tests/test_security.py):
+
+| Problema detectado | Corrección | Evidencia |
+| --- | --- | --- |
+| Una referencia de IA podía eludir el filtro de código. | Validación compartida y ejecución con funciones incorporadas reducidas. | Los programas con acceso al sistema o inspección interna se rechazan antes de iniciar un proceso. |
+| Un proceso hijo podía sobrevivir al programa principal. | Se bloquea la creación de procesos y se limpia el grupo de ejecución en POSIX incluso tras una salida normal. | Una prueba comprueba que el hijo no completa su acción después de finalizar el padre. |
+| Una API podía cambiar su resolución de dominio tras la validación. | La conexión utiliza directamente una dirección pública comprobada y conserva la verificación del certificado. | Pruebas de dirección de conexión, rechazo de IP privadas y nombre de servidor TLS. |
+| Las respuestas de proveedores no tenían límite de tamaño. | Máximo de 2 MiB y controles de tiempo para HTTP y CLI. | Pruebas con respuestas excesivas y tiempos agotados. |
+| Una misión mal formada podía causar un error interno. | Validación de tipos antes de procesar la misión, con reintentos controlados. | Respuestas inválidas se rechazan sin ejecutar la referencia. |
+| Una dependencia admitía nombres de archivo peligrosos en Windows. | Se exige Werkzeug 3.1.9 o superior, que incorpora la corrección. | [Aviso oficial de Werkzeug](https://github.com/pallets/werkzeug/security/advisories/GHSA-g6x2-hccm-hh4m). |
+
+[GitHub Actions](https://github.com/DiegoVill15/Python-Quest/actions) ejecuta las comprobaciones en Linux, Windows y macOS. Estas pruebas documentan los casos corregidos; no garantizan la ausencia de otras vulnerabilidades.
+
+### Alcance y límites
+
 Esta versión ejecuta código escrito por el usuario y una solución de referencia creada por la IA. Ambos pasan por la misma validación y se ejecutan con un conjunto reducido de funciones incorporadas. Se permiten las herramientas del curso: entrada y salida, cálculos, decisiones, bucles, colecciones y funciones propias. Las importaciones, el acceso a archivos, la creación de procesos y la inspección interna de objetos están bloqueados.
 
 Cada ejecución tiene límites de tiempo y salida; en Linux también se limita la memoria del proceso. Estas restricciones no equivalen a aislar el intérprete mediante el sistema operativo. Permite acceso solo a tus dispositivos de confianza; no la publiques en Internet ni como servicio multiusuario.

@@ -38,6 +38,13 @@ class SecurityTests(unittest.TestCase):
                   'print(sum([doble(n) for n in datos]))\n')
         self.assertEqual(grader.run_one(source, '2 3\n')['actual'], '10')
 
+    def test_unicode_input_and_output_have_portable_line_endings(self):
+        result = grader.run_one('nombre = input()\nprint(nombre)\nprint("¡Buen trabajo!")', 'Lía 🐍\n')
+        self.assertEqual(result['stdout'], 'Lía 🐍\n¡Buen trabajo!\n')
+        self.assertEqual(result['error'], '')
+        result = providers.run_cli([sys.executable, '-X', 'utf8', '-c', 'print(input())'], input='Lía 🐍', text=True)
+        self.assertEqual(result.stdout.strip(), 'Lía 🐍')
+
     @unittest.skipUnless(os.name == 'posix', 'POSIX process groups')
     def test_cleanup_kills_children_even_after_parent_exits(self):
         with tempfile.TemporaryDirectory() as directory:

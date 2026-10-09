@@ -213,6 +213,8 @@ def http_json(url, token, provider, payload=None):
 
 def run_cli(command, *, input=None, timeout=REQUEST_TIMEOUT, **kwargs):
     """Bound provider output on disk before loading it into memory."""
+    if kwargs.get('text'):
+        kwargs.setdefault('encoding', 'utf-8')
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
         with subprocess.Popen(command, stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
                               stdout=stdout, stderr=stderr, **kwargs) as process:
