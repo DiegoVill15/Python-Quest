@@ -12,7 +12,7 @@ Aplicación local para practicar Python mediante una aventura de 45 misiones. La
 - **Progresión:** nueve mundos, lecciones por etapa, XP, monedas, trofeos y un guardarropa con personajes 3D.
 - **Elección de proveedor:** conexiones por CLI o API, con las claves API almacenadas en el llavero del sistema.
 
-Es un proyecto de portafolio para explorar la IA aplicada a la práctica de programación. Su eficacia educativa todavía no se ha medido con estudiantes.
+Pensado para practicar desde fundamentos hasta estructuras de datos, funciones y pequeños problemas integradores.
 
 ## Capturas
 
@@ -22,7 +22,7 @@ Es un proyecto de portafolio para explorar la IA aplicada a la práctica de prog
 
 ![Misiones recientes: continuar un reto activo o consultar un archivo](docs/screenshots/historial.jpg)
 
-Las capturas se hicieron en una copia local del progreso, sin conexiones API ni preferencias personales. El código visible se escribió para la demostración; las capturas no implican llamadas nuevas a un proveedor de IA.
+Las capturas muestran una sesión de demostración. El código visible se escribió para ilustrar el uso del editor.
 
 ## Cómo se integra la IA
 
@@ -45,38 +45,77 @@ Las comprobaciones detectan inconsistencias, pero no garantizan que todo enuncia
 
 ## Iniciar
 
+### 1. Descargar el proyecto
+
 ```sh
 git clone https://github.com/DiegoVill15/Python-Quest.git
 cd Python-Quest
+```
+
+También puedes descargar el ZIP del repositorio y abrir una terminal en la carpeta extraída.
+
+### 2. Instalar y ejecutar
+
+**macOS y Linux**
+
+```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python app.py
 ```
 
-En Windows usa `py -3.12 -m venv .venv`, `.venv\Scripts\pip install -r requirements.txt` y `.venv\Scripts\python app.py`.
-Usa una versión instalada de Python desde 3.10. Abre <http://127.0.0.1:5001>. Los retos y el progreso se guardan en `data/`.
-No necesitas Node.js para iniciar: el repositorio incluye la interfaz ya compilada.
-El código de cada misión activa se guarda en el navegador para recuperarlo al recargar la página.
-El botón «Ejecutar» prueba tu código con una entrada que escribas o con un ejemplo público. Muestra la salida y los errores sin usar IA ni cambiar el progreso. «Enviar solución» sí revisa las seis pruebas de la misión.
-«Misiones recientes» abre los últimos cinco retos creados. «Continuar» recupera el borrador de una misión activa; «Ver archivo» permite consultar la lección, el enunciado y los ejemplos de un reto anterior, sin volver a enviarlo ni ganar recompensas.
-La campaña tiene nueve mundos de cinco misiones (45 en total). Las tres nuevas aldeas enseñan herramientas numéricas, limpieza de texto, pertenencia, control de bucles, orden, recorridos anidados y un proyecto integrador de expedición. Cada mundo se desbloquea al completar el anterior. Puedes reiniciar una aldea sin perder XP, trofeos ni mundos desbloqueados.
-Cada misión completada por primera vez entrega 30 XP y 10 monedas. En la ventana del guardarropa puedes ponerle nombre a tu aventurero, probar ropa y objetos en 3D, girar el personaje, comprar piezas y equiparlas. Los objetos raros, legendarios y míticos requieren completar los mundos indicados. Reiniciar una aldea conserva el equipo y no vuelve a entregar monedas por etapas ya premiadas.
-El currículo mantiene una única ficha por etapa con prerrequisitos, objetivos, herramientas permitidas y prohibidas, entrada, casos límite, errores habituales y ejemplos ejecutables. Al arrancar se validan las 45 etapas y sus salidas; las soluciones generadas se comprueban contra las herramientas enseñadas.
-Cada misión empieza con el editor vacío. Las etapas añaden conceptos y pasos nuevos; la IA recibe los enunciados anteriores, errores recientes y preferencias resumidas para adaptar la siguiente misión. Los comentarios nuevos se compactan durante esa misma generación; no se hace una llamada adicional.
-En «Conexión de IA» selecciona la CLI o añade una clave API. Inicia la sesión de la CLI por tu cuenta (`codex login`, `claude login` u `opencode auth login`). OpenCode Go se elige mediante su ID de modelo en OpenCode. Al abrir «Conexión de IA» o cambiar de proveedor se cargan automáticamente los modelos de Codex, Claude, OpenCode o una API. El desplegable conserva todas las opciones después de elegir; pulsa «Usar este modelo» para guardar. Codex usa `app-server` y Claude su protocolo de inicialización, sin enviar prompts; las opciones dependen de la sesión y la versión instalada. La opción «Escribir ID manualmente…» permite usar otro modelo o continuar si el listado no está disponible. El inicio de sesión de ChatGPT en Codex es distinto de una clave OpenAI API.
-Las claves API se guardan en el llavero del sistema y no en `data/state.json`; si el llavero no está disponible, la conexión no se guarda. Cada reto y revisión consume uso o créditos del proveedor seleccionado. Los errores de sintaxis se muestran sin llamar a la IA.
+**Windows (PowerShell)**
 
-Para Ollama Cloud u OpenRouter, abre «Añadir una conexión API», elige el proveedor y pega su clave. Las direcciones del servidor ya están configuradas y los modelos se cargan automáticamente. [Ollama Cloud](https://ollama.com/settings/keys) usa `https://ollama.com/v1`, sin instalar Ollama localmente. Su [plan Free](https://ollama.com/pricing) incluye uso inicial limitado y acceso a modelos de inicio; el catálogo puede mostrar modelos que necesiten saldo adicional. Ollama Cloud no admite JSON forzado: enviamos el esquema en el prompt y rechazamos respuestas que no sean JSON válido.
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\pip.exe install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
+```
 
-[OpenRouter](https://openrouter.ai/settings/keys) usa `https://openrouter.ai/api/v1`. El desplegable muestra las variantes `:free` y `openrouter/free`, que elige automáticamente un modelo gratuito. Se aplican límites de uso y disponibilidad; escribir manualmente un modelo de pago puede consumir créditos. No se cambia de proveedor ni se compra saldo automáticamente.
+Usa Python 3.10 o superior. Node.js solo es necesario para modificar la interfaz o ejecutar sus pruebas; el repositorio incluye la versión compilada.
 
-Python Quest acepta conexiones locales y las del dispositivo Mac dentro de tu red Tailscale. El servidor Python sigue escuchando solo en `127.0.0.1`; Tailscale Serve reenvía el tráfico de la red privada.
+### 3. Abrir la aplicación
 
-## Abrir desde Windows con Tailscale
+Visita <http://127.0.0.1:5001> en tu navegador. Mantén abierta la terminal mientras usas Python Quest.
 
-Con Tailscale activo en ambos equipos, abre `http://<IP-Tailscale-de-la-Mac>:5000` en Windows. En la Mac consulta la dirección actual con `tailscale ip -4`. También puedes usar el nombre del equipo que muestra `tailscale serve status`. La instalación de este proyecto y sus datos permanecen en la Mac; el navegador de Windows guarda sus propios borradores del editor.
+### 4. Conectar la IA
 
-Si Tailscale Serve no está configurado, en la Mac ejecuta `tailscale serve --bg --tcp=5000 tcp://127.0.0.1:5001`. Usa **Serve**, no Funnel: Serve comparte el puerto solo con dispositivos autorizados en tu red Tailscale.
+Abre **«Conexión de IA»** y elige una de estas opciones:
+
+| Tipo de conexión | Qué necesitas |
+| --- | --- |
+| Codex, Claude u OpenCode por CLI | Instalar la CLI elegida e iniciar sesión en ella. |
+| OpenAI, Anthropic, Ollama Cloud u OpenRouter por API | Una clave del proveedor y un llavero del sistema disponible. |
+| API compatible con OpenAI | Una dirección HTTPS pública y una clave API. |
+
+Selecciona un modelo y pulsa **«Usar este modelo»**. Si no se puede cargar la lista, utiliza **«Escribir ID manualmente…»**.
+
+Las claves API se guardan en el llavero del sistema. La creación y revisión de misiones utilizan el proveedor seleccionado y pueden consumir uso o créditos de tu cuenta.
+
+## Cómo jugar
+
+### Resolver una misión
+
+1. Abre el mapa y selecciona la misión disponible.
+2. Lee la lección, el objetivo, la entrada, la salida y los ejemplos.
+3. Escribe tu programa en el editor, que empieza vacío.
+4. Usa **«Ejecutar»** para probarlo con una entrada propia o un ejemplo público.
+5. Pulsa **«Enviar solución»** para comprobar las seis pruebas y recibir una explicación.
+
+«Ejecutar» no usa IA ni cambia el progreso. Los errores de sintaxis también se muestran sin consultar al proveedor.
+
+### Avanzar y personalizar tu aventurero
+
+- La campaña contiene nueve mundos de cinco misiones. Cada mundo se desbloquea al completar el anterior.
+- Cada misión superada por primera vez entrega 30 XP y 10 monedas.
+- En el guardarropa puedes cambiar el nombre y aspecto del aventurero, probar objetos en 3D, comprarlos y equiparlos.
+- Puedes reiniciar un mundo para practicar de nuevo. Conservas las recompensas y los mundos desbloqueados; una etapa ya premiada no vuelve a entregar XP ni monedas.
+
+### Consultar misiones y adaptar los próximos retos
+
+- **Misiones recientes:** muestra los últimos cinco retos creados. «Continuar» recupera una misión activa; «Ver archivo» abre la lección, el enunciado y los ejemplos de un reto anterior.
+- **Preferencias:** puedes indicar qué explicaciones o ejemplos te ayudan. La IA recibe estas preferencias y las dificultades recientes al crear la siguiente misión.
+- **Borradores:** el código de la misión activa se guarda en ese navegador. Para retomarlo, utiliza el mismo navegador y perfil.
 
 ## Modificar la interfaz
 
@@ -95,17 +134,47 @@ Esta versión ejecuta código escrito por el usuario y una solución de referenc
 
 El contexto del ejercicio y el código enviado para revisión se comparten con el proveedor de IA seleccionado. No incluyas contraseñas ni datos sensibles en el editor o en tus comentarios.
 
-El progreso se guarda en `data/state.json` y los borradores en el navegador. `data/`, el entorno de Python, las dependencias instaladas, los registros y los archivos `.env` están excluidos del repositorio. Las claves API se guardan en el llavero del sistema.
+- **Progreso:** se guarda en `data/state.json`, en el equipo que ejecuta la aplicación.
+- **Borradores:** se guardan en el navegador y no se sincronizan entre dispositivos.
+- **Claves API:** permanecen en el llavero del sistema.
+- **Archivos locales:** `data/`, el entorno de Python, las dependencias instaladas, los registros y los archivos `.env` están excluidos del repositorio.
 
-## Probar
+### Acceso desde otros dispositivos
+
+De forma opcional, puedes acceder desde dispositivos de confianza mediante Tailscale Serve. La aplicación reconoce los nombres y direcciones del equipo en Tailscale cuando está activo y mantiene el servidor en `127.0.0.1`. Este acceso requiere configurar Tailscale por separado; no es necesario para el uso local.
+
+## Pruebas
+
+Las pruebas comprueban la generación y evaluación de ejercicios, el progreso, las recompensas, las conexiones de IA y dos interacciones de la interfaz. Usan respuestas simuladas de los proveedores: no necesitan claves API ni consumen créditos de IA.
+
+### Python
+
+Con las dependencias instaladas, ejecuta:
 
 ```sh
+# macOS y Linux
 .venv/bin/python -m unittest discover -s tests
+```
+
+```powershell
+# Windows
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+### Interfaz
+
+Necesitas Node.js y npm:
+
+```sh
 npm ci
 npm test
 ```
 
-Las pruebas usan respuestas simuladas de los proveedores y no necesitan claves API ni consumen créditos. GitHub Actions ejecuta las pruebas y comprueba que la interfaz compilada esté actualizada.
+### Comprobaciones en GitHub
+
+El archivo `.github/workflows/tests.yml` configura GitHub Actions para ejecutar las mismas pruebas en un entorno limpio con cada push o pull request. También reconstruye la interfaz y comprueba que el archivo compilado coincida con el código fuente.
+
+Su función es detectar fallos antes de incorporar cambios. Este flujo no publica la aplicación ni se conecta a un proveedor de IA.
 
 ## Estructura
 
